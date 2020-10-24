@@ -3,12 +3,52 @@ extern crate glium;
 extern crate image;
 mod teapot;
 use std::fs;
+use tobj;
 
 fn main() {
 
     // tratando de cargar un obj a ver q onda
+    let file_obj = tobj::load_obj("resources/meshes/suzane.obj", true);
+    assert!(file_obj.is_ok());
+    let (models, materials) = file_obj.unwrap();
+
+    println!("# of models: {}", models.len());
+    println!("# of materials: {}", materials.len());
+
+    for (i,m) in models.iter().enumerate() {
+        let mesh = &m.mesh;
+        println!("model[{}].name = \'{}\'", i, m.name);
+        println!("model[{}].mesh.material_id = {:?}", i, mesh.material_id);
+
+        println!(
+            "Size of model[{}].num_face_indices: {}",
+            i,
+            mesh.num_face_indices.len()
+        );
+
+
+        println!("AMMOUNT OF POSITIONS IS {}", mesh.positions.len());
+        assert!(mesh.positions.len() % 3 == 0);
+        for f in 0..(mesh.positions.len()/3) {
+            let x = mesh.positions[f*3];
+            let y = mesh.positions[f*3+1];
+            let z = mesh.positions[f*3+2];
+            println!("    vertex[{}] = x{} y{} z{} ;", f, x, y, z);
+        }
+
+
+
+        /*let mut next_face = 0;
+        for f in 0..mesh.num_face_indices.len() {
+            let end = next_face + mesh.num_face_indices[f] as usize;
+            let face_indices: Vec<_> = mesh.indices[next_face..end].iter().collect();
+            println!("    face[{}] = {:?}", f, face_indices);
+            next_face = end;
+        }*/
+    }
+
     /*
-    caca aca
+    caca aca termina
     */
 
     #[allow(unused_imports)]
