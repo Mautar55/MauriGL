@@ -5,6 +5,12 @@ mod teapot;
 use std::fs;
 
 fn main() {
+
+    // tratando de cargar un obj a ver q onda
+    /*
+    caca aca
+    */
+
     #[allow(unused_imports)]
     use glium::{glutin, Surface};
 
@@ -39,9 +45,9 @@ fn main() {
     )
     .unwrap();
 
-    let vertex_shader_src = fs::read_to_string("shaders/vert-shader.glsl")
+    let vertex_shader_src = fs::read_to_string("resources/shaders/vert-shader.glsl")
         .expect("\n### No se encontro el archivo vertex shader. \n");
-    let fragment_shader_src = fs::read_to_string("shaders/frag-shader.glsl")
+    let fragment_shader_src = fs::read_to_string("resources/shaders/frag-shader.glsl")
         .expect("\n### No se encontro el archivo fragment shader. \n");
 
     let program =
