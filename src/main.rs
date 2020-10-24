@@ -14,7 +14,7 @@ fn main() {
     // 2. Parameters for building the Window.
     let wb = glium::glutin::window::WindowBuilder::new()
         .with_inner_size(glium::glutin::dpi::LogicalSize::new(500.0, 500.0))
-        .with_title("Look mama Im opengl-ing in rust!");
+        .with_title("Look mama Im opengl-ing in rust!!");
 
     // 3. Parameters for building the OpenGL context.
     let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24);
