@@ -343,7 +343,7 @@ dependencies = [
  "euler",
  "glium",
  "image",
- "tobj",
+ "obj",
 ]
 
 [[package]]
@@ -1010,6 +1010,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "obj"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d510a91cf52eab52df72ef1a87b9db96e3bb770e3148a58a39db7cdc13cd2692"
+
+[[package]]
 name = "objc"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1346,12 +1352,6 @@ dependencies = [
  "lzw",
  "miniz_oxide 0.3.7",
 ]
-
-[[package]]
-name = "tobj"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6172100cd5b17cdd085c94f261e31101ca31886c86a2337a6687dac6d2fb3cf1"
 
 [[package]]
 name = "toml"

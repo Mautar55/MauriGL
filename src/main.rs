@@ -2,13 +2,42 @@
 extern crate glium;
 extern crate image;
 mod teapot;
+use obj::Obj;
 use std::fs;
-use tobj;
 
 fn main() {
+    let malla = Obj::load("resources/meshes/suzane.obj").unwrap();
+    let cantidad_vertices = malla.data.position.len();
+    println!(">>>   La cantidad de vertices es: {}", cantidad_vertices);
+    
+    let mut vertices = malla.data.position.iter();
+    
+    let mut k: u64 = 0;
+    let mut lista_vertices = Vec::<[f32;3]>::new();
+    loop {
+        let q = vertices.next();
+        if q.is_none() {
+            break;
+        }
+        let t = q.unwrap();
+        let x = t[0];
+        let y = t[1];
+        let z = t[2];
+        //println!("Vertex{} x{} y{} z{}", k, x, y, z);
+        k += 1;
+        lista_vertices.push([x,y,z]);
+    }
+
+    for n in 0..cantidad_vertices {
+        let x = lista_vertices[n][0];
+        let y = lista_vertices[n][1];
+        let z = lista_vertices[n][2];
+        println!("Vertex number {} in x{} y{} z{}", n, x, y, z);
+    }
+
 
     // tratando de cargar un obj a ver q onda
-    let file_obj = tobj::load_obj("resources/meshes/suzane.obj", true);
+    /*let file_obj = tobj::load_obj("resources/meshes/suzane.obj", true);
     assert!(file_obj.is_ok());
     let (models, materials) = file_obj.unwrap();
 
@@ -24,10 +53,23 @@ fn main() {
             "Size of model[{}].num_face_indices: {}",
             i,
             mesh.num_face_indices.len()
-        );
+        );*/
 
+    /*let mut next_face = 0;
+    for f in 0..mesh.num_face_indices.len() {
+        let end = next_face + mesh.num_face_indices[f] as usize;
+        let face_indices: Vec<_> = mesh.indices[next_face..end].iter().collect();
+        println!(">>>   face[{}] = {:?}", f, face_indices);
+        for f in face_indices {
+            let x = mesh.positions[(f*3) as usize];
+            let y = mesh.positions[(f*3+1) as usize];
+            let z = mesh.positions[(f*3+2) as usize];
+            println!(">>>       f{} x{} y{} z{}",f,x,y,z);
+        }
+        next_face = end;
+    }*/
 
-        println!("AMMOUNT OF POSITIONS IS {}", mesh.positions.len());
+    /*println!("AMMOUNT OF POSITIONS IS {}", mesh.positions.len());
         assert!(mesh.positions.len() % 3 == 0);
         for f in 0..(mesh.positions.len()/3) {
             let x = mesh.positions[f*3];
@@ -35,17 +77,7 @@ fn main() {
             let z = mesh.positions[f*3+2];
             println!("    vertex[{}] = x{} y{} z{} ;", f, x, y, z);
         }
-
-
-
-        /*let mut next_face = 0;
-        for f in 0..mesh.num_face_indices.len() {
-            let end = next_face + mesh.num_face_indices[f] as usize;
-            let face_indices: Vec<_> = mesh.indices[next_face..end].iter().collect();
-            println!("    face[{}] = {:?}", f, face_indices);
-            next_face = end;
-        }*/
-    }
+    }*/
 
     /*
     caca aca termina
@@ -144,7 +176,7 @@ fn main() {
             [0.0, 0.0, 2.0, 1.0f32],
         ];
 
-        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(),60.0);
+        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 60.0);
 
         let view_matrix =
             generate_view_matrix(&[2.0, -1.0, 1.0], &[-2.0, 1.0, 1.0], &[0.0, 1.0, 0.0]);
@@ -170,9 +202,7 @@ fn main() {
     });
 }
 
-fn generate_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32;4];4] {
-    
-
+fn generate_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32; 4]; 4] {
     let aspect_ratio = dimensions.0 as f32 / dimensions.1 as f32;
 
     let fov: f32 = deg_fov * 3.141592 / 180.0;
