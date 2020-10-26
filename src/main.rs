@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate glium;
 extern crate image;
-mod teapot;
 use std::fs;
 use std::io::BufReader;
 use obj::{load_obj, Obj};
@@ -9,10 +8,38 @@ use obj::{load_obj, Obj};
 fn main() {
 
     // comienza la carga de modelo
- 
 
     let input = BufReader::new(fs::File::open("resources/meshes/suzane.obj").expect("### No se encontro el archivo."));
     let obj: Obj = load_obj(input).expect("### No se pudo cargar el objeto.");
+
+    let lista_vertices = obj.vertices;
+    let mut pre_lista_indices = obj.indices;
+    let mut lista_indices = Vec::<u16>::new();
+    // arreglando la lista! Porque los indices tienen las caras alreves!
+    
+    let longitud = pre_lista_indices.len()%3;
+    assert_eq!(longitud,0);
+    let mut iterador_indices = pre_lista_indices.iter_mut();
+    
+    loop {
+        let next1 = iterador_indices.next();
+        if next1.is_none() {
+            break;
+        }
+        let next1 = next1.unwrap();
+        let next2 = iterador_indices.next().unwrap();
+        let next3 = iterador_indices.next().unwrap();
+        
+        println!(">>>   Lista de indices {} {} {}",next1,next2,next3);
+
+        lista_indices.push(*next3);
+        lista_indices.push(*next2);
+        lista_indices.push(*next1);
+
+    }
+    drop(pre_lista_indices);
+
+    // terminada la carga
 
     #[allow(unused_imports)]
     use glium::{glutin, Surface};
@@ -31,25 +58,8 @@ fn main() {
     //    window with the events_loop.
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
-    let vb = obj.vertex_buffer(&display).expect("### No se pudo cargar el buffer vb.");
-    let ib = obj.index_buffer(&display).expect("### No se pudo cargar el ib");
-
-    /*#[derive(Copy, Clone)]
-    struct Vertex {
-        position: [f32; 2],
-        tex_coords: [f32; 2],
-    }
-
-    implement_vertex!(Vertex, position, tex_coords);*/
-
-    /*let positions = glium::VertexBuffer::new(&display, &teapot::VERTICES).unwrap();
-    let normals = glium::VertexBuffer::new(&display, &teapot::NORMALS).unwrap();
-    let indices = glium::IndexBuffer::new(
-        &display,
-        glium::index::PrimitiveType::TrianglesList,
-        &teapot::INDICES,
-    )
-    .unwrap();*/
+    let vertex_buffer = glium::VertexBuffer::new(&display, &lista_vertices).unwrap();
+    let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,&lista_indices).unwrap();
 
     let vertex_shader_src = fs::read_to_string("resources/shaders/vert-shader.glsl")
         .expect("\n### No se encontro el archivo vertex shader. \n");
@@ -107,13 +117,13 @@ fn main() {
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 2.0, 1.0f32],
+            [0.0, 0.0, 0.0, 1.0f32],
         ];
 
         let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 60.0);
 
         let view_matrix =
-            generate_view_matrix(&[2.0, -1.0, 1.0], &[-2.0, 1.0, 1.0], &[0.0, 1.0, 0.0]);
+            generate_view_matrix(&[-7.0, 5.0, 7.0], &[7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
 
         let uniforms = uniform! {
             t_matrix: transform_matrix,
@@ -124,8 +134,8 @@ fn main() {
 
         target
             .draw(
-                &vb,
-                &ib,
+                &vertex_buffer,
+                &index_buffer,
                 &program,
                 &uniforms,
                 &params,
@@ -154,6 +164,12 @@ fn generate_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32; 4
 }
 
 fn generate_view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
+    
+    // Coordenadas respecto a blender.
+    // Para pasar posiciones de blender a opengl, tenemos que invertir
+    // los ejes y, z entre si y despues invertir el signo
+    // de los ejes x, z de opengl (x, y en blender)
+    
     let f = {
         let f = direction;
         let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
