@@ -2,86 +2,17 @@
 extern crate glium;
 extern crate image;
 mod teapot;
-use obj::Obj;
 use std::fs;
+use std::io::BufReader;
+use obj::{load_obj, Obj};
 
 fn main() {
-    let malla = Obj::load("resources/meshes/suzane.obj").unwrap();
-    let cantidad_vertices = malla.data.position.len();
-    println!(">>>   La cantidad de vertices es: {}", cantidad_vertices);
-    
-    let mut vertices = malla.data.position.iter();
-    
-    let mut k: u64 = 0;
-    let mut lista_vertices = Vec::<[f32;3]>::new();
-    loop {
-        let q = vertices.next();
-        if q.is_none() {
-            break;
-        }
-        let t = q.unwrap();
-        let x = t[0];
-        let y = t[1];
-        let z = t[2];
-        //println!("Vertex{} x{} y{} z{}", k, x, y, z);
-        k += 1;
-        lista_vertices.push([x,y,z]);
-    }
 
-    for n in 0..cantidad_vertices {
-        let x = lista_vertices[n][0];
-        let y = lista_vertices[n][1];
-        let z = lista_vertices[n][2];
-        println!("Vertex number {} in x{} y{} z{}", n, x, y, z);
-    }
+    // comienza la carga de modelo
+ 
 
-
-    // tratando de cargar un obj a ver q onda
-    /*let file_obj = tobj::load_obj("resources/meshes/suzane.obj", true);
-    assert!(file_obj.is_ok());
-    let (models, materials) = file_obj.unwrap();
-
-    println!("# of models: {}", models.len());
-    println!("# of materials: {}", materials.len());
-
-    for (i,m) in models.iter().enumerate() {
-        let mesh = &m.mesh;
-        println!("model[{}].name = \'{}\'", i, m.name);
-        println!("model[{}].mesh.material_id = {:?}", i, mesh.material_id);
-
-        println!(
-            "Size of model[{}].num_face_indices: {}",
-            i,
-            mesh.num_face_indices.len()
-        );*/
-
-    /*let mut next_face = 0;
-    for f in 0..mesh.num_face_indices.len() {
-        let end = next_face + mesh.num_face_indices[f] as usize;
-        let face_indices: Vec<_> = mesh.indices[next_face..end].iter().collect();
-        println!(">>>   face[{}] = {:?}", f, face_indices);
-        for f in face_indices {
-            let x = mesh.positions[(f*3) as usize];
-            let y = mesh.positions[(f*3+1) as usize];
-            let z = mesh.positions[(f*3+2) as usize];
-            println!(">>>       f{} x{} y{} z{}",f,x,y,z);
-        }
-        next_face = end;
-    }*/
-
-    /*println!("AMMOUNT OF POSITIONS IS {}", mesh.positions.len());
-        assert!(mesh.positions.len() % 3 == 0);
-        for f in 0..(mesh.positions.len()/3) {
-            let x = mesh.positions[f*3];
-            let y = mesh.positions[f*3+1];
-            let z = mesh.positions[f*3+2];
-            println!("    vertex[{}] = x{} y{} z{} ;", f, x, y, z);
-        }
-    }*/
-
-    /*
-    caca aca termina
-    */
+    let input = BufReader::new(fs::File::open("resources/meshes/suzane.obj").expect("### No se encontro el archivo."));
+    let obj: Obj = load_obj(input).expect("### No se pudo cargar el objeto.");
 
     #[allow(unused_imports)]
     use glium::{glutin, Surface};
@@ -100,22 +31,25 @@ fn main() {
     //    window with the events_loop.
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
-    #[derive(Copy, Clone)]
+    let vb = obj.vertex_buffer(&display).expect("### No se pudo cargar el buffer vb.");
+    let ib = obj.index_buffer(&display).expect("### No se pudo cargar el ib");
+
+    /*#[derive(Copy, Clone)]
     struct Vertex {
         position: [f32; 2],
         tex_coords: [f32; 2],
     }
 
-    implement_vertex!(Vertex, position, tex_coords);
+    implement_vertex!(Vertex, position, tex_coords);*/
 
-    let positions = glium::VertexBuffer::new(&display, &teapot::VERTICES).unwrap();
+    /*let positions = glium::VertexBuffer::new(&display, &teapot::VERTICES).unwrap();
     let normals = glium::VertexBuffer::new(&display, &teapot::NORMALS).unwrap();
     let indices = glium::IndexBuffer::new(
         &display,
         glium::index::PrimitiveType::TrianglesList,
         &teapot::INDICES,
     )
-    .unwrap();
+    .unwrap();*/
 
     let vertex_shader_src = fs::read_to_string("resources/shaders/vert-shader.glsl")
         .expect("\n### No se encontro el archivo vertex shader. \n");
@@ -170,9 +104,9 @@ fn main() {
         target.clear_color_and_depth((0.0, 0.2, 0.0, 1.0), 1.0);
 
         let transform_matrix = [
-            [0.01, 0.0, 0.0, 0.0],
-            [0.0, 0.01, 0.0, 0.0],
-            [0.0, 0.0, 0.01, 0.0],
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, 2.0, 1.0f32],
         ];
 
@@ -190,8 +124,8 @@ fn main() {
 
         target
             .draw(
-                (&positions, &normals),
-                &indices,
+                &vb,
+                &ib,
                 &program,
                 &uniforms,
                 &params,
