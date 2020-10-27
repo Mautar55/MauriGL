@@ -120,7 +120,7 @@ fn main() {
             [0.0, 0.0, 0.0, 1.0f32],
         ];
 
-        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 60.0);
+        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
 
         let view_matrix =
             generate_view_matrix(&[-7.0, 5.0, 7.0], &[7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
