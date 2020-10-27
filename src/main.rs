@@ -9,7 +9,7 @@ fn main() {
 
     // comienza la carga de modelo
 
-    let input = BufReader::new(fs::File::open("resources/meshes/suzane.obj").expect("### No se encontro el archivo."));
+    let input = BufReader::new(fs::File::open("resources/meshes/abstract.obj").expect("### No se encontro el archivo."));
     let obj: Obj = load_obj(input).expect("### No se pudo cargar el objeto.");
 
     let lista_vertices = obj.vertices;
@@ -123,7 +123,7 @@ fn main() {
         let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
 
         let view_matrix =
-            generate_view_matrix(&[-7.0, 5.0, 7.0], &[7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
+            generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
 
         let uniforms = uniform! {
             t_matrix: transform_matrix,
