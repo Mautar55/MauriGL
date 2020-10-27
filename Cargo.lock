@@ -316,6 +316,7 @@ name = "customgl"
 version = "0.1.0"
 dependencies = [
  "euler",
+ "glam",
  "glium",
  "image",
  "obj-rs",
@@ -437,6 +438,12 @@ dependencies = [
  "log",
  "xml-rs",
 ]
+
+[[package]]
+name = "glam"
+version = "0.9.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8637c7ec4fd0776c51eeab3e0d5d1aa7e440ece3fc2ee7d674e13c957287bfc1"
 
 [[package]]
 name = "glium"
@@ -641,7 +648,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5cc7ad3d82c845bdb5dde34ffdcc7a5fb4d2996e1e1ee0f19c33bc80e15196b9"
 dependencies = [
- "num-traits 0.1.43",
+ "num-traits 0.2.12",
 ]
 
 [[package]]

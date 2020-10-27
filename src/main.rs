@@ -4,6 +4,7 @@ extern crate image;
 use std::fs;
 use std::io::BufReader;
 use obj::{load_obj, Obj};
+use glam;
 
 fn main() {
 
@@ -79,7 +80,7 @@ fn main() {
             write: true,
             ..Default::default()
         },
-        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
+        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullingDisabled,
         ..Default::default()
     };
 
@@ -120,11 +121,11 @@ fn main() {
             [0.0, 0.0, 0.0, 1.0f32],
         ];
 
-        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
+        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 80.0);
 
-        let view_matrix =
-            generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
-
+        //let view_matrix = generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
+        let view_matrix = generate_view_matrix(&[8.0, 8.0, 8.0], &[-8.0, -8.0, -8.0], &[0.0, 1.0, 0.0]);
+        
         let uniforms = uniform! {
             t_matrix: transform_matrix,
             p_matrix: perspective_matrix,
@@ -147,6 +148,13 @@ fn main() {
 }
 
 fn generate_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32; 4]; 4] {
+    let fov: f32 = deg_fov * 3.141592 / 180.0;
+    let aspect_ratio = dimensions.0 as f32 / dimensions.1 as f32;
+    let result = glam::Mat4::perspective_rh(fov, aspect_ratio, 0.1, 1024.0).to_cols_array_2d();
+    return result;
+}
+
+fn generate_lh_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32; 4]; 4] {
     let aspect_ratio = dimensions.0 as f32 / dimensions.1 as f32;
 
     let fov: f32 = deg_fov * 3.141592 / 180.0;
