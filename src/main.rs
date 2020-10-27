@@ -12,9 +12,13 @@ fn main() {
 
     let input = BufReader::new(fs::File::open("resources/meshes/abstract.obj").expect("### No se encontro el archivo."));
     let obj: Obj = load_obj(input).expect("### No se pudo cargar el objeto.");
-
+    let lista_indices = obj.indices;
     let lista_vertices = obj.vertices;
-    let mut pre_lista_indices = obj.indices;
+
+    /// Esto se usas para invertir la direccion de todas las caras
+    /// pero ya no sirve una vez que se usa right-handed.
+    ///
+    /*let mut pre_lista_indices = obj.indices;
     let mut lista_indices = Vec::<u16>::new();
     // arreglando la lista! Porque los indices tienen las caras alreves!
     
@@ -38,7 +42,7 @@ fn main() {
         lista_indices.push(*next1);
 
     }
-    drop(pre_lista_indices);
+    drop(pre_lista_indices);*/
 
     // terminada la carga
 
@@ -80,7 +84,7 @@ fn main() {
             write: true,
             ..Default::default()
         },
-        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullingDisabled,
+        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
         ..Default::default()
     };
 
@@ -112,7 +116,7 @@ fn main() {
         *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
 
         let mut target = display.draw();
-        target.clear_color_and_depth((0.0, 0.2, 0.0, 1.0), 1.0);
+        target.clear_color_and_depth((0.0, 0.05, 0.0, 1.0), 1.0);
 
         let transform_matrix = [
             [1.0, 0.0, 0.0, 0.0],
@@ -121,10 +125,9 @@ fn main() {
             [0.0, 0.0, 0.0, 1.0f32],
         ];
 
-        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 80.0);
+        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
 
-        //let view_matrix = generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
-        let view_matrix = generate_view_matrix(&[8.0, 8.0, 8.0], &[-8.0, -8.0, -8.0], &[0.0, 1.0, 0.0]);
+        let view_matrix = generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
         
         let uniforms = uniform! {
             t_matrix: transform_matrix,
@@ -154,65 +157,29 @@ fn generate_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32; 4
     return result;
 }
 
-fn generate_lh_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32; 4]; 4] {
-    let aspect_ratio = dimensions.0 as f32 / dimensions.1 as f32;
-
-    let fov: f32 = deg_fov * 3.141592 / 180.0;
-    let zfar = 1024.0;
-    let znear = 0.1;
-
-    let f = 1.0 / (fov / 2.0).tan();
-
-    [
-        [f * aspect_ratio, 0.0, 0.0, 0.0],
-        [0.0, f, 0.0, 0.0],
-        [0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
-        [0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
-    ]
-}
-
 fn generate_view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
     
     // Coordenadas respecto a blender.
-    // Para pasar posiciones de blender a opengl, tenemos que invertir
-    // los ejes y, z entre si y despues invertir el signo
-    // de los ejes x, z de opengl (x, y en blender)
-    
-    let f = {
-        let f = direction;
-        let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
-        let len = len.sqrt();
-        [f[0] / len, f[1] / len, f[2] / len]
-    };
+    // Para pasar posiciones de blender a opengl, tenemos que
+    // intercambiar los ejes y, z entre si ... y despues
+    // invertir el signo del eje z de opengl (y en blender)
+    // Esto no se aplica en la funcion porque solo blender usa esas coordenadas falopas.
+    use glam::{Vec3};
 
-    let s = [
-        up[1] * f[2] - up[2] * f[1],
-        up[2] * f[0] - up[0] * f[2],
-        up[0] * f[1] - up[1] * f[0],
-    ];
+    let vposition = glam::vec3(position[0], position[1], position[2]);
+    let vdirection = glam::vec3(direction[0], direction[1], direction[2]);
+    let vup = glam::vec3(up[0], up[1], up[2]);
 
-    let s_norm = {
-        let len = s[0] * s[0] + s[1] * s[1] + s[2] * s[2];
-        let len = len.sqrt();
-        [s[0] / len, s[1] / len, s[2] / len]
-    };
-
-    let u = [
-        f[1] * s_norm[2] - f[2] * s_norm[1],
-        f[2] * s_norm[0] - f[0] * s_norm[2],
-        f[0] * s_norm[1] - f[1] * s_norm[0],
-    ];
-
-    let p = [
-        -position[0] * s_norm[0] - position[1] * s_norm[1] - position[2] * s_norm[2],
-        -position[0] * u[0] - position[1] * u[1] - position[2] * u[2],
-        -position[0] * f[0] - position[1] * f[1] - position[2] * f[2],
-    ];
+    let zaxis = Vec3::normalize(vposition - vdirection);
+    let xaxis = Vec3::normalize(Vec3::cross(vup,zaxis));
+    let yaxis = Vec3::cross(zaxis,xaxis);
 
     [
-        [s_norm[0], u[0], f[0], 0.0],
-        [s_norm[1], u[1], f[1], 0.0],
-        [s_norm[2], u[2], f[2], 0.0],
-        [p[0], p[1], p[2], 1.0],
+        [Vec3::x(xaxis)               , Vec3::x(yaxis)               , Vec3::x(zaxis), 0.0],
+        [Vec3::y(xaxis)               , Vec3::y(yaxis)               , Vec3::y(zaxis), 0.0],
+        [Vec3::z(xaxis)               , Vec3::z(yaxis)               , Vec3::z(zaxis), 0.0],
+        [-(Vec3::dot(xaxis,vposition)), -(Vec3::dot(yaxis,vposition)), -(Vec3::dot(zaxis,vposition)), 1.0],
     ]
 }
+
+
