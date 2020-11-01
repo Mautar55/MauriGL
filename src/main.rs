@@ -48,7 +48,7 @@ fn main() {
         glium::Program::from_source(&display, &vertex_shader_src, &fragment_shader_src, None)
             .unwrap();
 
-    let mut delta_time: f32 = -0.5;
+    let mut delta_time: f32 = -7.0;
     let light = [-1.0, 0.4, 0.9f32];
 
     let params = glium::DrawParameters {
@@ -61,9 +61,9 @@ fn main() {
         ..Default::default()
     };
     
-    let mut scale = glam::vec3(1.0, 1.5, 2.0);
-    let mut rotation = glam::quat(0.15, 0.05, -0.3, 1.0);
-    let mut position = glam::vec3(0.0,1.0,0.5);
+    let mut scale = glam::vec3(1.0, 1.0, 1.0);
+    let mut rotation = glam::quat(0.0, 0.0, 0.0, 1.0);
+    let mut position = glam::vec3(0.0,0.0,0.0);
     std_coords(&mut scale, &mut rotation, &mut position);
     
     event_loop.run(move |event, _, control_flow| {
@@ -83,23 +83,25 @@ fn main() {
             _ => return,
         }
 
-        delta_time += 0.01;
+        delta_time += 0.035;
 
-        if delta_time > 0.5 {
-            delta_time = -0.5;
+        if delta_time > 5.0 {
+            delta_time = -7.0;
         }
 
         let next_frame_time =
             std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
         *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
 
+
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.05, 0.0, 1.0), 1.0);
 
+
+
+
         let transform_matrix = glam::Mat4::from_scale_rotation_translation(scale, rotation, position).to_cols_array_2d();
-
         let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
-
         let view_matrix = generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
         
         let uniforms = uniform! {
@@ -109,17 +111,48 @@ fn main() {
             u_light: light,
         };
 
-        target
-            .draw(
-                &vertex_buffer,
-                &index_buffer,
-                &program,
-                &uniforms,
-                &params,
-            )
-            .unwrap();
+        target.draw(
+                    &vertex_buffer,
+                    &index_buffer,
+                    &program,
+                    &uniforms,
+                    &params,
+            ).unwrap();
+
+        //target.finish().unwrap();
+
+        ////////// proximo draw call
+        
+        let mut scale = glam::vec3(1.0, 1.0, 1.0);
+        let mut rotation = glam::quat(-0.4, -0.1, 0.1, 1.0);
+        let mut position = glam::vec3(-0.7,-1.0,delta_time);
+        std_coords(&mut scale, &mut rotation, &mut position);
+        
+        let transform_matrix = glam::Mat4::from_scale_rotation_translation(scale, rotation, position).to_cols_array_2d();
+        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
+        let view_matrix = generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
+
+        let uniforms = uniform! {
+            t_matrix: transform_matrix,
+            p_matrix: perspective_matrix,
+            v_matrix: view_matrix,
+            u_light: light,
+        };
+
+        target.draw(
+            &vertex_buffer,
+            &index_buffer,
+            &program,
+            &uniforms,
+            &params,
+        ).unwrap();
+
+        // fin del 2do draw call
+
 
         target.finish().unwrap();
+
+
     });
 }
 

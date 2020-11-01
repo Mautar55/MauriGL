@@ -10,4 +10,5 @@ edition = "2018"
 glium = "0.26.0"
 glam = "0.9.5"
 image = "*"
+const-tweaker = "0.3.1"
 obj-rs = { version = "0.6", features = ["glium"] }
