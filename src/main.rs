@@ -1,16 +1,21 @@
 #[macro_use]
 extern crate glium;
 extern crate image;
+
+pub mod mesh;
+
 use std::fs;
 use std::io::BufReader;
 use obj::{load_obj, Obj};
 use glam;
+use mesh::Mesh;
 
 fn main() {
 
     // comienza la carga de modelo
+    // "resources/meshes/abstract.obj"
 
-    // ahora voy a probar de importar mas o menos como corresponde
+    let sample_scene: Mesh = Mesh::insta_load("resources/meshes/abstract.obj");
 
     let input = BufReader::new(fs::File::open("resources/meshes/abstract.obj").expect("### No se encontro el archivo."));
     let obj: Obj = load_obj(input).expect("### No se pudo cargar el objeto.");
