@@ -5,8 +5,6 @@ extern crate image;
 pub mod mesh;
 
 use std::fs;
-use std::io::BufReader;
-use obj::{load_obj, Obj};
 use glam;
 use mesh::Mesh;
 
@@ -15,12 +13,9 @@ fn main() {
     // comienza la carga de modelo
     // "resources/meshes/abstract.obj"
 
-    let sample_scene: Mesh = Mesh::insta_load("resources/meshes/abstract.obj");
-
-    let input = BufReader::new(fs::File::open("resources/meshes/abstract.obj").expect("### No se encontro el archivo."));
-    let obj: Obj = load_obj(input).expect("### No se pudo cargar el objeto.");
-    let lista_indices = obj.indices;
-    let lista_vertices = obj.vertices;
+    let sample_mesh: Mesh = Mesh::insta_load("resources/meshes/abstract.obj");
+    let lista_indices = sample_mesh.index_list;
+    let lista_vertices = sample_mesh.vertex_list;
 
     // terminada la carga
 
@@ -219,13 +214,6 @@ fn std_coords (scale: &mut glam::Vec3, rotation: &mut glam::Quat, position: &mut
     oz = Vec3::z(*scale);
     Vec3::set_y(scale, oz);
     Vec3::set_z(scale, oy);
-
-    
-    
-    
-
-    
-                                
 
 }
 
