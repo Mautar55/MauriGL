@@ -2,9 +2,9 @@ use std::fs;
 use std::io::BufReader;
 use obj::{load_obj, Obj};
 
-pub struct Mesh {
+pub(super) struct Mesh {
     pub index_list: std::vec::Vec<u16>,
-    pub vertex_list: std::vec::Vec<obj::Vertex>
+    pub vertex_list: std::vec::Vec<obj::Vertex>,
 }
 
 impl Mesh {
@@ -14,7 +14,7 @@ impl Mesh {
         let vl = Vec::new();
         Mesh {
             index_list: il,
-            vertex_list: vl
+            vertex_list: vl,
         }
     }
 
@@ -24,7 +24,7 @@ impl Mesh {
         let vl = Vec::new();
         let mut result = Mesh {
             index_list: il,
-            vertex_list: vl
+            vertex_list: vl,
         };
         result.load(adress);
         return result;

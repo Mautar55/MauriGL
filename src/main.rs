@@ -2,21 +2,27 @@
 extern crate glium;
 extern crate image;
 
-pub mod mesh;
+pub mod mesh; use mesh::Mesh;
+pub mod transform; use transform::Transform;
 
 use std::fs;
 use glam;
-use mesh::Mesh;
+
 
 fn main() {
 
     // comienza la carga de modelo
     // "resources/meshes/abstract.obj"
 
-    let sample_mesh: Mesh = Mesh::insta_load("resources/meshes/abstract.obj");
+    let sample_mesh: Mesh = Mesh::insta_load("resources/meshes/suzane_z.obj");
     let lista_indices = sample_mesh.index_list;
     let lista_vertices = sample_mesh.vertex_list;
-
+    let sample_trasform = Transform::new();
+    let mut other_transform = Transform {
+        rotation: glam::quat(-0.4, -0.1, 0.1, 1.0),
+        position: glam::vec3(-0.7,-1.0,0.0),
+        ..Default::default()
+    };
     // terminada la carga
 
     #[allow(unused_imports)]
@@ -61,11 +67,6 @@ fn main() {
         ..Default::default()
     };
     
-    let mut scale = glam::vec3(1.0, 1.0, 1.0);
-    let mut rotation = glam::quat(0.0, 0.0, 0.0, 1.0);
-    let mut position = glam::vec3(0.0,0.0,0.0);
-    std_coords(&mut scale, &mut rotation, &mut position);
-    
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -97,12 +98,14 @@ fn main() {
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.05, 0.0, 1.0), 1.0);
 
+        //////////////// info compartida entre draw calls //////////////////////////
 
-
-
-        let transform_matrix = glam::Mat4::from_scale_rotation_translation(scale, rotation, position).to_cols_array_2d();
         let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
-        let view_matrix = generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
+        let view_matrix = generate_view_matrix(&[7.0, -7.0, 5.0], &[-7.0, 7.0, -5.0], &[0.0, 0.0, 1.0]);
+
+        ///////////// primer draw call /////////////////////////////////////
+
+        let transform_matrix = sample_trasform.get_transform_matrix();
         
         let uniforms = uniform! {
             t_matrix: transform_matrix,
@@ -119,18 +122,11 @@ fn main() {
                     &params,
             ).unwrap();
 
-        //target.finish().unwrap();
 
-        ////////// proximo draw call
+        ////////// proximo draw call ////////////////////////////////////////////////////////
         
-        let mut scale = glam::vec3(1.0, 1.0, 1.0);
-        let mut rotation = glam::quat(-0.4, -0.1, 0.1, 1.0);
-        let mut position = glam::vec3(-0.7,-1.0,delta_time);
-        std_coords(&mut scale, &mut rotation, &mut position);
-        
-        let transform_matrix = glam::Mat4::from_scale_rotation_translation(scale, rotation, position).to_cols_array_2d();
-        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
-        let view_matrix = generate_view_matrix(&[7.0, 5.0, 7.0], &[-7.0, -5.0, -7.0], &[0.0, 1.0, 0.0]);
+        other_transform.set_position(glam::vec3(0.0, 0.0, delta_time));
+        let transform_matrix = other_transform.get_transform_matrix();
 
         let uniforms = uniform! {
             t_matrix: transform_matrix,
@@ -147,7 +143,7 @@ fn main() {
             &params,
         ).unwrap();
 
-        // fin del 2do draw call
+        ////////////////////////// fin de los draw calls //////////////////////////
 
 
         target.finish().unwrap();
@@ -182,39 +178,3 @@ fn generate_view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]
         [-(Vec3::dot(xaxis,vposition)), -(Vec3::dot(yaxis,vposition)), -(Vec3::dot(zaxis,vposition)), 1.0],
     ]
 }
-
-fn std_coords (scale: &mut glam::Vec3, rotation: &mut glam::Quat, position: &mut glam::Vec3) {
-    
-    use glam::{Vec3,Quat};
-    let mut oy: f32;
-    let mut oz: f32;
-    
-    // Coordenadas respecto a blender.
-    // Para pasar posiciones de blender a opengl, tenemos que
-    // intercambiar los ejes y, z entre si ... y despues
-    // invertir el signo del eje z de opengl (que seria el y en blender)
-    // entonces opengl=blender tal que x=x ; y=z ; z=-y
-
-    // posicion
-    oy = Vec3::y(*position);
-    oz = Vec3::z(*position);
-    Vec3::set_y(position, oz);
-    Vec3::set_z(position, -oy);
-
-    // rotacion, hacemos lo mismo pero Quat no tiene funciones para acceder
-    // a los campos asi que es manual nomas...
-    *rotation = Quat::from_xyzw(Quat::x(*rotation), 
-                                Quat::z(*rotation), 
-                                -Quat::y(*rotation), 
-                                Quat::w(*rotation));
-
-    // escala, igual que para la posicion pero sin invertir el signo
-    // del eje z porque sino invierte las normales tambien
-    oy = Vec3::y(*scale);
-    oz = Vec3::z(*scale);
-    Vec3::set_y(scale, oz);
-    Vec3::set_z(scale, oy);
-
-}
-
-
