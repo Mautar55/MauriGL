@@ -4,13 +4,13 @@ extern crate image;
 
 pub mod mesh; use mesh::Mesh;
 pub mod transform; use transform::Transform;
+pub mod camera; use camera::Camera;
 
 use std::fs;
 use glam;
 
 
 fn main() {
-
     // comienza la carga de modelo
     // "resources/meshes/abstract.obj"
 
@@ -23,6 +23,13 @@ fn main() {
         position: glam::vec3(-0.7,-1.0,0.0),
         ..Default::default()
     };
+
+    let mut sample_camera = Camera::new(30.0, 
+        Transform {
+            position: glam::vec3(7.0, -7.0, 5.0),
+            ..Default::default()
+        }
+    );
     // terminada la carga
 
     #[allow(unused_imports)]
@@ -100,8 +107,11 @@ fn main() {
 
         //////////////// info compartida entre draw calls //////////////////////////
 
-        let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
-        let view_matrix = generate_view_matrix(&[7.0, -7.0, 5.0], &[-7.0, 7.0, -5.0], &[0.0, 0.0, 1.0]);
+        sample_camera.set_dimensions(target.get_dimensions());
+        /*let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
+        let view_matrix = generate_view_matrix(&[7.0, -7.0, 5.0], &[-7.0, 7.0, -5.0], &[0.0, 0.0, 1.0]);*/
+        let perspective_matrix = sample_camera.make_perspective_matrix();
+        let view_matrix = sample_camera.make_view_matrix();
 
         ///////////// primer draw call /////////////////////////////////////
 
