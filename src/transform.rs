@@ -20,7 +20,7 @@ impl Transform {
     pub fn set_position(&mut self, movement: glam::Vec3) {
         self.position = movement;
     }
-    
+    #[allow(dead_code)]
     fn to_std_coords(scale: &mut glam::Vec3, rotation: &mut glam::Quat, position: &mut glam::Vec3) {
         // se queda pero ya no hace falt ausarlo porque ahora voy a trabajar con
         // el sistema de coordenadas de blender, que es

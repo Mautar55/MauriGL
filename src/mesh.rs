@@ -9,6 +9,7 @@ pub(super) struct Mesh {
 
 impl Mesh {
 
+    #[allow(dead_code)]
     pub fn new() -> Mesh {
         let il = Vec::new();
         let vl = Vec::new();

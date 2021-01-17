@@ -2,13 +2,18 @@
 extern crate glium;
 extern crate image;
 
-pub mod mesh; use mesh::Mesh;
-pub mod transform; use transform::Transform;
-pub mod camera; use camera::Camera;
+use glium::glutin::{
+    event::{Event, KeyboardInput, WindowEvent, ElementState},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
+
+pub mod mesh; use mesh::*;
+pub mod transform; use transform::*;
+pub mod camera; use camera::*;
 
 use std::fs;
 use glam;
-
 
 fn main() {
     // comienza la carga de modelo
@@ -24,12 +29,10 @@ fn main() {
         ..Default::default()
     };
 
-    let mut sample_camera = Camera::new(30.0, 
-        Transform {
-            position: glam::vec3(7.0, -7.0, 5.0),
-            ..Default::default()
-        }
-    );
+    let vp = Viewport::new(640.0, 480.0);
+    let mut sample_camera = Camera::new(30.0,vp.ud());
+    sample_camera.set_position(glam::vec3(7.0, -7.0, 5.0));
+    sample_camera.set_roll_deg(0.0);
     // terminada la carga
 
     #[allow(unused_imports)]
@@ -40,7 +43,7 @@ fn main() {
 
     // 2. Parameters for building the Window.
     let wb = glium::glutin::window::WindowBuilder::new()
-        .with_inner_size(glium::glutin::dpi::LogicalSize::new(500.0, 500.0))
+        .with_inner_size(glium::glutin::dpi::LogicalSize::new(vp.w(), vp.h()))
         .with_title("Look mama Im opengl-ing in rust!!");
 
     // 3. Parameters for building the OpenGL context.
@@ -77,6 +80,17 @@ fn main() {
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
+                glutin::event::WindowEvent::KeyboardInput { 
+                    input: KeyboardInput {
+                        virtual_keycode: Some(virtual_code),
+                        state: ElementState::Pressed,
+                        ..
+                    },
+                    ..
+                 } => match virtual_code {
+                     Q => sample_camera.set_roll_deg(180.0),
+                     _ => return
+                 },
                 glutin::event::WindowEvent::CloseRequested => {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                     return;
@@ -108,8 +122,6 @@ fn main() {
         //////////////// info compartida entre draw calls //////////////////////////
 
         sample_camera.set_dimensions(target.get_dimensions());
-        /*let perspective_matrix = generate_perspective_matrix(target.get_dimensions(), 30.0);
-        let view_matrix = generate_view_matrix(&[7.0, -7.0, 5.0], &[-7.0, 7.0, -5.0], &[0.0, 0.0, 1.0]);*/
         let perspective_matrix = sample_camera.make_perspective_matrix();
         let view_matrix = sample_camera.make_view_matrix();
 
@@ -131,7 +143,6 @@ fn main() {
                     &uniforms,
                     &params,
             ).unwrap();
-
 
         ////////// proximo draw call ////////////////////////////////////////////////////////
         
@@ -155,36 +166,8 @@ fn main() {
 
         ////////////////////////// fin de los draw calls //////////////////////////
 
-
         target.finish().unwrap();
 
 
     });
-}
-
-fn generate_perspective_matrix(dimensions: (u32, u32), deg_fov: f32) -> [[f32; 4]; 4] {
-    let fov: f32 = deg_fov * 3.141592 / 180.0;
-    let aspect_ratio = dimensions.0 as f32 / dimensions.1 as f32;
-    let result = glam::Mat4::perspective_rh(fov, aspect_ratio, 0.1, 1024.0).to_cols_array_2d();
-    return result;
-}
-
-fn generate_view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
-    
-    use glam::{Vec3};
-
-    let vposition = glam::vec3(position[0], position[1], position[2]);
-    let vdirection = glam::vec3(direction[0], direction[1], direction[2]);
-    let vup = glam::vec3(up[0], up[1], up[2]);
-
-    let zaxis = Vec3::normalize(vposition - vdirection);
-    let xaxis = Vec3::normalize(Vec3::cross(vup,zaxis));
-    let yaxis = Vec3::cross(zaxis,xaxis);
-
-    [
-        [Vec3::x(xaxis)               , Vec3::x(yaxis)               , Vec3::x(zaxis), 0.0],
-        [Vec3::y(xaxis)               , Vec3::y(yaxis)               , Vec3::y(zaxis), 0.0],
-        [Vec3::z(xaxis)               , Vec3::z(yaxis)               , Vec3::z(zaxis), 0.0],
-        [-(Vec3::dot(xaxis,vposition)), -(Vec3::dot(yaxis,vposition)), -(Vec3::dot(zaxis,vposition)), 1.0],
-    ]
 }
