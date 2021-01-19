@@ -17,7 +17,7 @@ fn main() {
     // comienza la carga de modelo
     // "resources/meshes/abstract.obj"
 
-    let sample_mesh: Mesh = Mesh::insta_load("resources/meshes/suzane_z.obj");
+    let sample_mesh: Mesh = Mesh::insta_load("resources/meshes/gizmo.obj");
     let lista_indices = sample_mesh.index_list;
     let lista_vertices = sample_mesh.vertex_list;
     let sample_trasform = Transform::new();
@@ -111,10 +111,10 @@ fn main() {
             _ => return,
         }
 
-        delta_time += 0.035;
+        delta_time += 0.0035;
 
-        if delta_time > 5.0 {
-            delta_time = -7.0;
+        if delta_time > 2.0 * 3.141592 {
+            delta_time = 0.0;
         }
 
         let next_frame_time =
@@ -126,8 +126,7 @@ fn main() {
         target.clear_color_and_depth((0.0, 0.05, 0.0, 1.0), 1.0);
 
         //////////////// info compartida entre draw calls //////////////////////////
-
-        sample_camera.set_dimensions(target.get_dimensions());
+        sample_camera.set_spherical_target(1.75, delta_time);
         let perspective_matrix = sample_camera.make_perspective_matrix();
         let view_matrix = sample_camera.make_view_matrix();
 
@@ -193,6 +192,6 @@ fn main() {
 
         target.finish().unwrap();
 
-
     });
 }
+

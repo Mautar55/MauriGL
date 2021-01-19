@@ -41,7 +41,7 @@ impl Camera {
     pub fn make_view_matrix(&self) -> [[f32; 4]; 4] {
         // x por el seno , z por el coseno
         let up_vector = glam::vec3(self.roll.sin(), 0.0, self.roll.cos());
-        let result = glam::Mat4::look_at_rh(self.position, self.target-self.position, up_vector).to_cols_array_2d();
+        let result = glam::Mat4::look_at_rh(self.position, self.target, up_vector).to_cols_array_2d();
         return result;
     }
 
@@ -50,6 +50,19 @@ impl Camera {
         let aspect_ratio = self.dimensions.0 as f32 / self.dimensions.1 as f32;
         let result = glam::Mat4::perspective_rh(fov, aspect_ratio, 0.1, 1024.0).to_cols_array_2d();
         return result;
+    }
+
+    pub fn set_spherical_target(&mut self, incl: f32, z_ang: f32) {
+        let x = incl.sin() * z_ang.cos();
+        let y = incl.sin() * z_ang.sin();
+        let z = incl.cos();
+        let new_target = glam::vec3(x,y,z) + self.position;
+        
+        self.set_target(new_target);
+        let coordx = (glam::Vec3::x(self.target)-glam::Vec3::x(self.position)).to_string();
+        let coordy = (glam::Vec3::y(self.target)-glam::Vec3::y(self.position)).to_string();
+        
+        println!("x {} mmm y {} ",coordx,coordy);
     }
 }
 
