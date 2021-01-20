@@ -3,7 +3,9 @@ pub(super) struct Camera {
     target: glam::Vec3,
     dimensions: (u32,u32),
     deg_fov: f32,
-    roll: f32
+    roll: f32,
+    incl: f32,
+    z_ang: f32
 }
 
 #[allow(dead_code)]
@@ -14,8 +16,23 @@ impl Camera {
             target: glam::Vec3::zero(),
             dimensions: new_dimensions,
             deg_fov: new_fov,
-            roll: 0.0
+            roll: 0.0,
+            incl: 0.0,
+            z_ang: 0.0,
         }
+    }
+
+    pub fn move_global(&mut self, delta: glam::Vec3) {
+        let pos = delta + self.position;
+        self.set_position(pos);
+    }
+
+    pub fn move_local(&mut self, delta: glam::Vec3) {
+        let rtarget = self.target - self.position;
+        let rot = glam::Quat::from_rotation_ypr(glam::Vec3::x(-rtarget).atan2(glam::Vec3::z(-rtarget)), (-glam::Vec3::y(rtarget)).acos(), 0.0);
+        let new_pos = rot.mul_vec3(delta);
+        //self.set_position(rtarget.normalize() * delta.length() + self.position);
+        self.set_position(new_pos + self.position);
     }
 
     pub fn set_position(&mut self, new_position: glam::Vec3) {
@@ -23,7 +40,7 @@ impl Camera {
     }
 
     pub fn set_target(&mut self, new_target: glam::Vec3)  {
-        self.target = new_target;
+        self.target = new_target + self.position;
     }
 
     pub fn set_dimensions(&mut self,nd: (u32,u32)) {
@@ -36,6 +53,18 @@ impl Camera {
 
     pub fn set_roll_deg(&mut self, new_roll: f32) {
         self.roll = new_roll * 3.141592 / 180.0;
+    }
+
+    pub fn add_roll_deg(&mut self, plus_roll: f32) {
+        self.roll += plus_roll * 3.141592 / 180.0;
+        if self.roll >= 2.0 * 3.141592 {
+            self.roll -= 2.0 * 3.141592;
+        }
+        if self.roll < 0.0 {
+            self.roll += 2.0 * 3.141592;
+        }
+        println!("roll is {} ", self.roll * 180.0 / 3.141592);
+        //println!("roll is {} ", plus_roll);
     }
 
     pub fn make_view_matrix(&self) -> [[f32; 4]; 4] {
@@ -56,13 +85,15 @@ impl Camera {
         let x = incl.sin() * z_ang.cos();
         let y = incl.sin() * z_ang.sin();
         let z = incl.cos();
-        let new_target = glam::vec3(x,y,z) + self.position;
+        self.incl = incl;
+        self.z_ang = z_ang;
+        let new_target = glam::vec3(x,y,z);
         
         self.set_target(new_target);
-        let coordx = (glam::Vec3::x(self.target)-glam::Vec3::x(self.position)).to_string();
-        let coordy = (glam::Vec3::y(self.target)-glam::Vec3::y(self.position)).to_string();
+        let _coordx = (glam::Vec3::x(self.target)-glam::Vec3::x(self.position)).to_string();
+        let _coordy = (glam::Vec3::y(self.target)-glam::Vec3::y(self.position)).to_string();
         
-        println!("x {} mmm y {} ",coordx,coordy);
+        //println!("x {} mmm y {} ",coordx,coordy);
     }
 }
 

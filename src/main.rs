@@ -2,16 +2,17 @@
 extern crate glium;
 extern crate image;
 
-use glium::glutin::{
-    event::{KeyboardInput, ElementState},
-};
+use glium::glutin::event::{ElementState, KeyboardInput};
 
-pub mod mesh; use mesh::*;
-pub mod transform; use transform::*;
-pub mod camera; use camera::*;
+pub mod mesh;
+use mesh::*;
+pub mod transform;
+use transform::*;
+pub mod camera;
+use camera::*;
 
-use std::fs;
 use glam;
+use std::fs;
 
 fn main() {
     // comienza la carga de modelo
@@ -23,7 +24,7 @@ fn main() {
     let sample_trasform = Transform::new();
     let mut other_transform = Transform {
         rotation: glam::quat(-0.4, -0.1, 0.1, 1.0),
-        position: glam::vec3(-0.7,-1.0,0.0),
+        position: glam::vec3(-0.7, -1.0, 0.0),
         ..Default::default()
     };
 
@@ -33,9 +34,15 @@ fn main() {
     let rcubes_transform = Transform::new();
 
     let vp = Viewport::new(640.0, 480.0);
-    let mut sample_camera = Camera::new(30.0,vp.ud());
+    let mut sample_camera = Camera::new(30.0, vp.ud());
     sample_camera.set_position(glam::vec3(7.0, -7.0, 5.0));
     sample_camera.set_roll_deg(0.0);
+    let mut z_ang = 0.0;
+    let mut i_ang = 2.4;
+    let camera_speed = 0.1;
+    sample_camera.set_spherical_target(i_ang, z_ang);
+
+    let mut delta_time: f32 = 0.016666667;
     // terminada la carga
 
     #[allow(unused_imports)]
@@ -56,11 +63,20 @@ fn main() {
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
     let vertex_buffer = glium::VertexBuffer::new(&display, &lista_vertices).unwrap();
-    let index_buffer = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList,&lista_indices).unwrap();
+    let index_buffer = glium::IndexBuffer::new(
+        &display,
+        glium::index::PrimitiveType::TrianglesList,
+        &lista_indices,
+    )
+    .unwrap();
 
     let rcubes_vbuffer = glium::VertexBuffer::new(&display, &rcubes_vlist).unwrap();
-    let rcubes_ibuffer =glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &rcubes_ilist).unwrap();
-    
+    let rcubes_ibuffer = glium::IndexBuffer::new(
+        &display,
+        glium::index::PrimitiveType::TrianglesList,
+        &rcubes_ilist,
+    )
+    .unwrap();
     let vertex_shader_src = fs::read_to_string("resources/shaders/vert-shader.glsl")
         .expect("\n### No se encontro el archivo vertex shader. \n");
     let fragment_shader_src = fs::read_to_string("resources/shaders/frag-shader.glsl")
@@ -70,7 +86,6 @@ fn main() {
         glium::Program::from_source(&display, &vertex_shader_src, &fragment_shader_src, None)
             .unwrap();
 
-    let mut delta_time: f32 = -7.0;
     let light = [-1.0, 0.4, 0.9f32];
 
     let params = glium::DrawParameters {
@@ -82,27 +97,46 @@ fn main() {
         backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
         ..Default::default()
     };
-    
+
+
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
-                glutin::event::WindowEvent::KeyboardInput { 
-                    input: KeyboardInput {
-                        virtual_keycode: Some(virtual_code),
-                        state: ElementState::Pressed,
-                        ..
-                    },
+                glutin::event::WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            virtual_keycode: Some(virtual_code),
+                            state: ElementState::Pressed,
+                            ..
+                        },
                     ..
-                 } => match virtual_code {
-                     glium::glutin::event::VirtualKeyCode::Q => sample_camera.set_roll_deg(180.0),
-                     _ => return
-                 },
+                } => match virtual_code {
+                    glium::glutin::event::VirtualKeyCode::E => sample_camera.move_global(glam::Vec3::unit_z()*camera_speed),
+                    glium::glutin::event::VirtualKeyCode::Q => sample_camera.move_global(glam::Vec3::unit_z()*-camera_speed),
+                    glium::glutin::event::VirtualKeyCode::W => sample_camera.move_local(glam::Vec3::unit_y()*-camera_speed),
+                    glium::glutin::event::VirtualKeyCode::S => sample_camera.move_local(glam::Vec3::unit_y()*camera_speed),
+                    glium::glutin::event::VirtualKeyCode::A => sample_camera.move_local(glam::Vec3::unit_x()*-camera_speed),
+                    glium::glutin::event::VirtualKeyCode::D => sample_camera.move_local(glam::Vec3::unit_x()*camera_speed),
+                    _ => return,
+                },
                 glutin::event::WindowEvent::CloseRequested => {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                     return;
                 }
                 _ => return,
             },
+            glutin::event::Event::DeviceEvent {event, ..} => match event {
+                glutin::event::DeviceEvent::MouseMotion {delta, ..} => {
+                    //sample_camera.add_roll_deg(delta.0 as f32);
+
+                    // 0.016666667 
+
+                    z_ang += delta_time * -0.6 * delta.0 as f32;
+                    i_ang += delta_time * 0.6 * delta.1 as f32;
+                },
+                _ => return
+            }
+            ,
             glutin::event::Event::NewEvents(cause) => match cause {
                 glutin::event::StartCause::ResumeTimeReached { .. } => (),
                 glutin::event::StartCause::Init => (),
@@ -111,29 +145,25 @@ fn main() {
             _ => return,
         }
 
-        delta_time += 0.0035;
-
-        if delta_time > 2.0 * 3.141592 {
-            delta_time = 0.0;
-        }
+        delta_time = 0.016666667;
 
         let next_frame_time =
             std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
+
         *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
 
-
+        
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.05, 0.0, 1.0), 1.0);
 
         //////////////// info compartida entre draw calls //////////////////////////
-        sample_camera.set_spherical_target(1.75, delta_time);
+        sample_camera.set_spherical_target(i_ang, z_ang);
         let perspective_matrix = sample_camera.make_perspective_matrix();
         let view_matrix = sample_camera.make_view_matrix();
 
         ///////////// primer draw call /////////////////////////////////////
 
         let transform_matrix = sample_trasform.get_transform_matrix();
-        
         let uniforms = uniform! {
             t_matrix: transform_matrix,
             p_matrix: perspective_matrix,
@@ -141,16 +171,11 @@ fn main() {
             u_light: light,
         };
 
-        target.draw(
-                    &vertex_buffer,
-                    &index_buffer,
-                    &program,
-                    &uniforms,
-                    &params,
-            ).unwrap();
+        target
+            .draw(&vertex_buffer, &index_buffer, &program, &uniforms, &params)
+            .unwrap();
 
         ////////// proximo draw call ////////////////////////////////////////////////////////
-        
         other_transform.set_position(glam::vec3(0.0, 0.0, delta_time));
         let transform_matrix = other_transform.get_transform_matrix();
 
@@ -161,16 +186,11 @@ fn main() {
             u_light: light,
         };
 
-        target.draw(
-            &vertex_buffer,
-            &index_buffer,
-            &program,
-            &uniforms,
-            &params,
-        ).unwrap();
+        target
+            .draw(&vertex_buffer, &index_buffer, &program, &uniforms, &params)
+            .unwrap();
 
         ///////////// DRAWCALL DE LOS CUBES
-        
         let transform_matrix = rcubes_transform.get_transform_matrix();
 
         let uniforms = uniform! {
@@ -179,19 +199,18 @@ fn main() {
             v_matrix: view_matrix,
             u_light: light,
         };
-        
-        target.draw(
-            &rcubes_vbuffer,
-            &rcubes_ibuffer,
-            &program,
-            &uniforms,
-            &params,
-        ).unwrap();
 
+        target
+            .draw(
+                &rcubes_vbuffer,
+                &rcubes_ibuffer,
+                &program,
+                &uniforms,
+                &params,
+            )
+            .unwrap();
         ////////////////////////// fin de los draw calls //////////////////////////
 
         target.finish().unwrap();
-
     });
 }
-
